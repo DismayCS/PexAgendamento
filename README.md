@@ -1,47 +1,137 @@
-# 💈 Sistema Web de Agendamento para Salão de Beleza
+# Sistema de Agendamentos Web
 
-Este projeto é uma aplicação web de agendamento, desenvolvida como parte do meu Projeto de Extensão (PEX) no curso de Engenharia de Software. Seu objetivo é substituir os agendamentos manuais em papel por uma solução digital mais rápida, intuitiva e acessível para o dia a dia de um salão de beleza.
+## Intuito do projeto
 
-## 🚀 Tecnologias utilizadas
+Este projeto foi desenvolvido para melhorar a organizacao operacional de um salao, com foco em:
 
-- **Node.js**
-- **Express**
-- **MySQL**
-- **EJS**
-- **Dotenv**
-- **Express-session**
-- **Moment-timezone**
-- **Path**
+- controle de clientes
+- organizacao da agenda
+- gerenciamento de tempo
+- previsibilidade de estoque
+- reducao de trabalho manual no processo de agendamento
 
-## 🧱 Arquitetura
+## Evolucao por semestre
 
-O projeto foi estruturado utilizando o padrão de arquitetura **MVC (Model-View-Controller)**, separando a lógica da aplicação em camadas bem definidas, o que facilita a manutenção e escalabilidade do sistema.
+### 1o semestre - Base de agendamentos
 
-## 🎯 Funcionalidades
+No primeiro semestre, foi elaborada a base do sistema de agendamentos.
 
-- Cadastro de clientes com dados completos
-- Cadastro e gerenciamento de serviços
-- Agendamento com data, horário e duração
-- Visualização de agendamentos por calendário
-- Sessões e controle de autenticação
-- Sistema pensado para ser evoluído continuamente
+Objetivo principal:
 
-## 🎯 Funcionalidades proximas
+- ter melhor controle de clientes
+- melhorar o gerenciamento de horarios
+- reduzir conflitos e falhas no controle manual de agenda
 
-- Acesso organizado para outros usuarios (usuário comum/admin) *(em Desenvolvimento)*
-- Acesso Mobile *(em Desenvolvimento)*
-- ChatBot de Agendamento e Atendimento *(em Desenvolvimento)*
+### 2o semestre - Controle de estoque
 
-## 🛠️ Instalação e uso 
+No segundo semestre, foi implementado o modulo de estoque de produtos.
 
-### Pré-requisitos
+Objetivo principal:
 
-- Node.js instalado
-- MySQL configurado
+- melhorar o gerenciamento de materiais
+- prevenir falta de insumos
+- dar mais previsibilidade para compras e operacao do salao
 
-### Passos para rodar o projeto:
+### 3o semestre - Responsividade para celular
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/DismayCS/salao-agendamentos.git
-git push origin main
+No terceiro semestre, o sistema foi adaptado para uso em dispositivos moveis.
+
+Objetivo principal:
+
+- permitir uso do app no celular
+- disponibilizar interface responsiva
+- facilitar operacao no dia a dia, em diferentes telas
+
+### 4o semestre - Acesso de clientes e pre-agendamento (planejado)
+
+No quarto semestre, sera implementado o acesso dos clientes do salao para:
+
+- visualizar horarios disponiveis
+- realizar pre-agendamento pelo software
+- reduzir a necessidade de contato direto com a dona do salao para marcar horarios
+
+Objetivo principal:
+
+- otimizar tempo gasto no agendamento
+- melhorar a visualizacao de disponibilidade para os clientes
+- reduzir retrabalho de comunicacao
+
+## Stack atual
+
+- Frontend: React + Vite + TypeScript
+- Backend: Express + TypeScript + Prisma
+- Banco de dados: PostgreSQL
+- Containers: Docker + Docker Compose
+
+## Arquitetura
+
+Servicos isolados:
+
+- `frontend` (Nginx + build Vite) em `http://localhost:5173`
+- `backend` (API Express) em `http://localhost:3000`
+- `postgres` em `localhost:5432`
+
+O frontend encaminha chamadas `/api/*` para o backend via proxy interno.
+
+## Estrutura de pastas
+
+```txt
+backend/
+  src/
+  prisma/
+  Dockerfile
+  .env.example
+  .env.docker
+frontend/
+  src/
+  nginx/default.conf
+  Dockerfile
+docker-compose.yml
+```
+
+## Execucao com Docker
+
+Na raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+Para parar:
+
+```bash
+docker compose down
+```
+
+Para remover volume do banco:
+
+```bash
+docker compose down -v
+```
+
+## Variaveis de ambiente
+
+Docker usa `backend/.env.docker`.
+
+Exemplo:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/agendamento"
+PORT=3000
+JWT_SECRET="troque-esta-chave-em-producao"
+```
+
+## CI de release (SemVer)
+
+Workflow:
+
+- `.github/workflows/semver-release-draft.yml`
+
+Regras:
+
+- executa apenas em PR mergeado
+- cria tag e draft release apenas no fluxo `develop -> main`
+- bump SemVer definido por uma das labels abaixo:
+- `major` ou `semver:major` ou `release:major`
+- `minor` ou `semver:minor` ou `release:minor`
+- `patch` ou `semver:patch` ou `release:patch`

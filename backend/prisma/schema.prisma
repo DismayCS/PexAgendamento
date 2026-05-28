@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id              Int           @id @default(autoincrement())
+  nome_completo   String
+  cpf             String?       @unique
+  data_nascimento DateTime?
+  endereco        String?
+  telefone_fixo   String?
+  celular         String
+  email           String?       @unique
+  created_at      DateTime      @default(now())
+  agendamentos    Agendamento[]
+}
+
+model Servico {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  duracao      Int
+  observacao   String?
+  preco        Decimal       @default(0)
+  created_at   DateTime      @default(now())
+  agendamentos Agendamento[]
+  produtos     ServicoProduto[]
+}
+
+model Produto {
+  id            Int                 @id @default(autoincrement())
+  nome          String
+  tipo          String
+  quantidade    Int                 @default(0)
+  preco         Decimal             @default(0)
+  tamanho       Decimal             @default(0)
+  unidade       UnidadeMedida       @default(ML)
+  classe        ProdutoClasse       @default(INSUMO)
+  created_at    DateTime            @default(now())
+  atualizado_em DateTime            @updatedAt
+  movimentos    MovimentoEstoque[]
+  servicos      ServicoProduto[]
+  agendamentos  AgendamentoProduto[]
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  REAJUSTE
+}
+
+model MovimentoEstoque {
+  id          Int               @id @default(autoincrement())
+  produto_id  Int
+  tipo        TipoMovimentacao
+  quantidade  Int
+  observacao  String?
+  created_at  DateTime          @default(now())
+
+  produto Produto @relation(fields: [produto_id], references: [id], onDelete: Cascade)
+}
+
+model ServicoProduto {
+  id         Int      @id @default(autoincrement())
+  servico_id Int
+  produto_id Int
+  consumo    Decimal  @default(0)
+  created_at DateTime @default(now())
+
+  servico Servico @relation(fields: [servico_id], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produto_id], references: [id], onDelete: Cascade)
+
+  @@unique([servico_id, produto_id])
+}
+
+model AgendamentoProduto {
+  id             Int      @id @default(autoincrement())
+  agendamento_id Int
+  produto_id     Int
+  consumo        Decimal  @default(0)
+  created_at     DateTime @default(now())
+
+  agendamento Agendamento @relation(fields: [agendamento_id], references: [id], onDelete: Cascade)
+  produto     Produto     @relation(fields: [produto_id], references: [id], onDelete: Cascade)
+
+  @@unique([agendamento_id, produto_id])
+}
+
+enum UnidadeMedida {
+  ML
+  L
+  G
+  KG
+}
+
+enum ProdutoClasse {
+  VENDA
+  INSUMO
+}
+
+enum StatusAgendamento {
+  AGENDADO
+  ATENDIDO
+  CANCELADO
+}
+
+enum MetodoPagamento {
+  DINHEIRO
+  DEBITO
+  CREDITO
+  PIX
+}
+
+model Agendamento {
+  id             Int       @id @default(autoincrement())
+  cliente_id     Int
+  servico_id     Int
+  data_hora      DateTime
+  created_at     DateTime  @default(now())
+  status         StatusAgendamento @default(AGENDADO)
+  metodo_pagamento MetodoPagamento?
+  finalizado_em  DateTime?
+
+  produtos AgendamentoProduto[]
+  cliente  Cliente @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+  servico  Servico @relation(fields: [servico_id], references: [id], onDelete: Restrict)
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  nome_completo String
+  usuario       String   @unique
+  email         String?  @unique
+  celular       String?  @unique
+  senha_hash    String
+  created_at    DateTime @default(now())
+}

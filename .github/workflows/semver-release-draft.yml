@@ -1,0 +1,139 @@
+name: SemVer Tag and Draft Release
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  semver_release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate source and target branches
+        id: branch_check
+        run: |
+          base_ref="$(echo "${{ github.event.pull_request.base.ref }}" | tr '[:upper:]' '[:lower:]')"
+          head_ref="$(echo "${{ github.event.pull_request.head.ref }}" | tr '[:upper:]' '[:lower:]')"
+
+          if [ "$base_ref" = "main" ] && [ "$head_ref" = "develop" ]; then
+            echo "is_release_flow=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release_flow=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping: this workflow only runs for merged PRs from develop to main."
+          fi
+
+      - name: Checkout repository
+        if: steps.branch_check.outputs.is_release_flow == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve semver bump from PR labels
+        if: steps.branch_check.outputs.is_release_flow == 'true'
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map((l) => l.name.toLowerCase());
+
+            const hasMajor = labels.some((l) => ['major', 'semver:major', 'release:major'].includes(l));
+            const hasMinor = labels.some((l) => ['minor', 'semver:minor', 'release:minor'].includes(l));
+            const hasPatch = labels.some((l) => ['patch', 'semver:patch', 'release:patch'].includes(l));
+
+            if (hasMajor) {
+              core.setOutput('type', 'major');
+              return;
+            }
+            if (hasMinor) {
+              core.setOutput('type', 'minor');
+              return;
+            }
+            if (hasPatch) {
+              core.setOutput('type', 'patch');
+              return;
+            }
+
+            core.setFailed(
+              'Missing semver label. Add one of: major|minor|patch or semver:major|semver:minor|semver:patch.'
+            );
+
+      - name: Compute next tag
+        if: steps.branch_check.outputs.is_release_flow == 'true'
+        id: next_tag
+        shell: bash
+        run: |
+          git fetch --tags --force
+          latest_tag="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -n 1)"
+
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+
+          version="${latest_tag#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+
+          case "${{ steps.bump.outputs.type }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+            *)
+              echo "Invalid bump type: ${{ steps.bump.outputs.type }}"
+              exit 1
+              ;;
+          esac
+
+          new_tag="v${major}.${minor}.${patch}"
+          echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push git tag
+        if: steps.branch_check.outputs.is_release_flow == 'true'
+        env:
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: |
+          tag="${{ steps.next_tag.outputs.new_tag }}"
+
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists. Skipping tag creation."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$MERGE_SHA" -m "Release $tag"
+          git push origin "$tag"
+
+      - name: Create draft release
+        if: steps.branch_check.outputs.is_release_flow == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: |
+          tag="${{ steps.next_tag.outputs.new_tag }}"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Draft/release for $tag already exists. Skipping release creation."
+            exit 0
+          fi
+
+          gh release create "$tag" \
+            --draft \
+            --target "$MERGE_SHA" \
+            --title "$tag" \
+            --generate-notes
