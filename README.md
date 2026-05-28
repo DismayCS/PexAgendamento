@@ -12,7 +12,7 @@ Este projeto foi desenvolvido para melhorar a organizacao operacional de um sala
 
 ## Evolucao por semestre
 
-### 1o semestre - Base de agendamentos
+### 1º semestre - Base de agendamentos
 
 No primeiro semestre, foi elaborada a base do sistema de agendamentos.
 
@@ -22,7 +22,7 @@ Objetivo principal:
 - melhorar o gerenciamento de horarios
 - reduzir conflitos e falhas no controle manual de agenda
 
-### 2o semestre - Controle de estoque
+### 2º semestre - Controle de estoque
 
 No segundo semestre, foi implementado o modulo de estoque de produtos.
 
@@ -32,7 +32,7 @@ Objetivo principal:
 - prevenir falta de insumos
 - dar mais previsibilidade para compras e operacao do salao
 
-### 3o semestre - Responsividade para celular
+### 3º semestre - Responsividade para celular
 
 No terceiro semestre, o sistema foi adaptado para uso em dispositivos moveis.
 
@@ -42,7 +42,7 @@ Objetivo principal:
 - disponibilizar interface responsiva
 - facilitar operacao no dia a dia, em diferentes telas
 
-### 4o semestre - Acesso de clientes e pre-agendamento (planejado)
+### 4ºsemestre - Acesso de clientes e pre-agendamento (planejado)
 
 No quarto semestre, sera implementado o acesso dos clientes do salao para:
 
