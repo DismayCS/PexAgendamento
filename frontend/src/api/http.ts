@@ -23,7 +23,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   if (hasBody) {
     try {
       data = await response.json();
-    } catch (error) {
+    } catch {
       data = null;
     }
   }

@@ -35,8 +35,16 @@ const StockMovementsPage = () => {
   }, []);
 
   useEffect(() => {
-    loadMovements(filter ? filter : undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const loadFilteredMovements = async () => {
+      try {
+        const response = await fetchMovements(filter || undefined);
+        setMovements(response.movimentos || []);
+      } catch (error) {
+        setFeedback({ type: "error", message: (error as Error).message });
+      }
+    };
+
+    void loadFilteredMovements();
   }, [filter]);
 
   const loadData = async () => {
@@ -49,15 +57,6 @@ const StockMovementsPage = () => {
       setFeedback({ type: "error", message: (error as Error).message });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadMovements = async (tipo?: MovementType) => {
-    try {
-      const response = await fetchMovements(tipo);
-      setMovements(response.movimentos || []);
-    } catch (error) {
-      setFeedback({ type: "error", message: (error as Error).message });
     }
   };
 

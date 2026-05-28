@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 type Language = 'en' | 'pt-BR';
@@ -22,20 +23,23 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
 
 const SETTINGS_KEY = 'sa_web_settings';
 
-export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
+const readInitialSettings = (): Settings => {
+  const stored = localStorage.getItem(SETTINGS_KEY);
+  if (!stored) {
+    return defaultSettings;
+  }
 
-  useEffect(() => {
-    const stored = localStorage.getItem(SETTINGS_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setSettings({ ...defaultSettings, ...parsed });
-      } catch {
-        localStorage.removeItem(SETTINGS_KEY);
-      }
-    }
-  }, []);
+  try {
+    const parsed = JSON.parse(stored);
+    return { ...defaultSettings, ...parsed };
+  } catch {
+    localStorage.removeItem(SETTINGS_KEY);
+    return defaultSettings;
+  }
+};
+
+export const SettingsProvider = ({ children }: { children: ReactNode }) => {
+  const [settings, setSettings] = useState<Settings>(readInitialSettings);
 
   useEffect(() => {
     const root = document.documentElement;

@@ -80,4 +80,4 @@ export default {
     save: 'Salvar',
     reload: 'Recarregar'
   }
-} satisfies Record<string, any>;
+} satisfies Record<string, unknown>;
